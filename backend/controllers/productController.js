@@ -24,13 +24,13 @@ const getAllProducts = async (req, res) => {
 //create product
 // we made catchAsyncError inorder to make use of try catch block.
 const createProduct = catchAsyncError( async (req, res, next) =>{
+    req.body.user = req.user.id;
     const products = await Product.create(req.body);
     res.status(201).json({
         success:true,
         products
     });
 });
-
 
 
 const productDetail = catchAsyncError( async (req, res, next) => {
@@ -49,11 +49,9 @@ const productDetail = catchAsyncError( async (req, res, next) => {
     } 
     res.status(200).json({
         success:true,
-        product,
-        productCount
+        product
     })
 });
-
 
 
 const updateProduct = catchAsyncError(async (req, res, next) =>{
@@ -78,7 +76,6 @@ const updateProduct = catchAsyncError(async (req, res, next) =>{
         })
     }
 });
-
 
 
 //delete product

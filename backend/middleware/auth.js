@@ -8,7 +8,7 @@ const User = require("../models/userModel");
 
 const isAuthenticatedUser = catchAsyncError( async(req, res, next) =>{
 
-    const { token } = req.cookies;
+    const { token } = req.cookies;  // to get cookie from request we have to use cookie parser in app.js
 
     // console.log(token);
     if(!token){
@@ -17,7 +17,7 @@ const isAuthenticatedUser = catchAsyncError( async(req, res, next) =>{
 
     // sendToken
     const decodedData = jwt.verify(token, process.env.JWT_SECRET);
-    req.user = await User.findById(decodedData._id);
+    req.user = await User.findById(decodedData.id);
     next();
 
 });
@@ -27,7 +27,7 @@ const authorizeRoles = (...roles) => {
         if(!roles.includes(req.user.role)){
             return next(
                 new Errorhander(
-                    `Role: ${req.user} is not allowed to acces this resource` ,
+                    `Role: ${req.user.role} is not allowed to acces this resource` ,
                      403
                 )
             )

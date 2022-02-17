@@ -2,6 +2,7 @@ const mongoose = require('mongoose');
 const validator = require('validator');
 const bcrypt = require('bcryptjs');
 const jwt  = require("jsonwebtoken");
+const crypto = require("crypto");
 
 const userSchema = new mongoose.Schema({
 
@@ -43,8 +44,8 @@ const userSchema = new mongoose.Schema({
         default:1234
     },
 
-    resstPasswordToken:String,
-    resstPasswordExpire:Date,
+    resetPasswordToken:String,
+    resetPasswordExpire:Date,
 });
 //we cannot use this keyword in arrow function that is why we write function
 userSchema.pre("save", async function(next){
@@ -65,5 +66,21 @@ userSchema.methods.getJWTToken = function () {
 userSchema.methods.comparePassword = async function(enteredPassword){
     return await bcrypt.compare(enteredPassword, this.password);
 }
+
+//generating password reset token
+userSchema.methods.getResetPasswordToken = function(){
+    // generating token
+    const resetToken = crypto.randomBytes(20).toString("hex"); // we are hex inside toString method because we get buffer value if we do not use hex
+    // const tokenCrypto = crypto.createHash("sha256").update(token).digest("hex")
+    //sha256 is algorithm refer google for this
+    // we are using hex inside digest so that donot get buffer value
+
+    //hasing and adding resetPasswordToken to userSchema
+    this.resetPasswordToken = crypto.createHash("sha256").update(resetToken).digest("hex");
+    this.resetPasswordExpire = Date.now() + 15 * 60 * 1000;
+
+    return resetToken;
+}
+
 
 module.exports = mongoose.model("User", userSchema);
