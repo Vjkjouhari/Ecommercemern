@@ -33,14 +33,14 @@ const registerUser = catchAsyncError( async (req, res, next) => {
 });
 
 //login user
-const loginUser = catchAsyncError( async (req, res, next) => {
+const loginUser = catchAsyncError( async(req, res, next) => {
     const {email, password} = req.body;
     //checking if user has entered correct crenditals
     if(!email || !password){
         return next(new Errorhander("Please Enter Email & Password", 400))
     }
 
-        //because we use select inmodel in password we call 
+    //because we use select inmodel in password we call 
     const user = await User.findOne({ email }).select("+password");
 
     if(!user){
@@ -76,7 +76,7 @@ const logoutUser = catchAsyncError( async(req, res, next) => {
 });
 
 // forgot password
-const forgotPassword = catchAsyncError( async (req, res, next) => {
+const forgotPassword = catchAsyncError( async(req, res, next) => {
     const user = await User.findOne({email: req.body.email});
     if(!user){
         return next(new Errorhander("user not found", 404));
@@ -133,6 +133,62 @@ const resetPassword = catchAsyncError( async(req, res, next) => {
     sendToken(user, 200, res);
 })
 
+// get User Detail
+const getUserDetail = catchAsyncError( async(req, res, next) => {
+    const userDetail = await User.findById(req.user.id);
+    
+    res.status(200).json({
+        success:true,
+        userDetail
+    });
+});
+
+// change Password
+const updatePassword = catchAsyncError( async(req, res, next) => {
+
+    const userDetail = await User.findById(req.user.id).select("+password");
+
+    const isPasswordMatched = await userDetail.comparePassword(req.body.oldPassword);
+
+    if(!isPasswordMatched){
+        return next(new Errorhander("Old password is incorrect", 401));
+    }
+
+    if(req.body.newPassword !== req.body.confirmPassword){
+        return next(new Errorhander("password does not match", 400));
+    }
+
+    userDetail.password = req.body.newPassword;
+    await userDetail.save();
+
+    // res.status(200).json({
+    //     success:true,
+    //     userDetail
+    // });
+    sendToken(userDetail, 200, res);
+});
+
+// update Profile
+const updateProfile = catchAsyncError( async(req, res, next) => {
+
+    const newUserData = {
+        name: req.body.name,
+        email: req.body.email,
+    }
+
+    const userDetail = await User.findByIdAndUpdate(req.user.id, newUserData, {
+        new: true,
+        runValidators: true,
+        userFindAndModify: false,
+    });
+
+    const message = `Profile Updated Successfully`; 
+
+    res.status(200).json({
+        success:true,
+        message
+    });
+});
 
 
 
@@ -141,5 +197,8 @@ module.exports = {
     loginUser,
     logoutUser,
     forgotPassword,
-    resetPassword
+    resetPassword,
+    getUserDetail,
+    updatePassword,
+    updateProfile
 }
